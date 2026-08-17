@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta name="google-site-verification" content="bUXin7uJUidoBlVfG1iUZ1irXS5wCxUyC-qKVz7xkXM" />
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="light dark">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <meta property="og:title" content="Chess Tap Mode">
+    <meta property="og:description" content="Main catur online ringan, mode tap-to-move. Login tamu gas!">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22black%22/></svg>">
+
+    <title>Chess Tap Mode</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e0e6ed;
+            --primary: #3085d6;
+            --primary-hover: #2b77c0;
+            --danger: #d33;
+            --success: #28a745;
+            --input-bg: #f0f2f5;
+            --highlight-source: rgba(255, 255, 0, 0.6);
+            --highlight-dest: rgba(0, 255, 0, 0.5);
+            --shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --border-color: #333333;
+            --primary: #3085d6;
+            --input-bg: #2a2a2a;
+            --highlight-source: rgba(255, 215, 0, 0.5);
+            --highlight-dest: rgba(50, 205, 50, 0.5);
+            --shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .sa-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        h3 {
+            margin-top: 0;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0;
+            background: var(--input-bg);
+            border: 2px solid transparent;
+            color: var(--text-color);
+            border-radius: 12px;
+            box-sizing: border-box;
+            outline: none;
+            font-size: 15px;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            transition: transform 0.1s, background-color 0.3s;
+        }
+        
+        button:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-small { width: auto; padding: 8px 16px; margin: 0; font-size: 13px; }
+
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+
+        /* AVATAR & GALLERY STYLES */
+        .avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; vertical-align: middle; border: 2px solid var(--border-color); background: var(--card-bg); }
+        .avatar-lg { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; border: 3px solid var(--primary); cursor: pointer; background: var(--card-bg); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-height: 350px; overflow-y: auto; padding-top: 10px; }
+        .gallery-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
+        .gallery-img:hover { border-color: var(--primary); }
+        .cat-btn { padding: 10px; flex: 1; margin: 0; background: var(--input-bg); color: var(--text-color); border: none; border-radius: 10px; font-size: 13px; font-weight: 600; }
+        .cat-btn.active { background: var(--primary); color: white; }
+
+        /* BOARD & HIGHLIGHTS */
+        #board { width: 100%; margin: 15px 0; user-select: none; border-radius: 8px; overflow: hidden; box-shadow: var(--shadow); }
+        .highlight-src { box-shadow: inset 0 0 0 1000px var(--highlight-source) !important; }
+        .highlight-dest { box-shadow: inset 0 0 0 1000px var(--highlight-dest) !important; cursor: pointer; }
+        .highlight-dest::after { content: ''; display: block; width: 15px; height: 15px; background: rgba(0,0,0,0.3); border-radius: 50%; margin: 35% auto; }
+
+        /* POPUP INFO BIDAK (TOAST) */
+        #piece-toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 6px 16px; border-radius: 20px; font-size: 13px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: 600; }
+
+        /* FLOATING BUTTONS */
+        .float-btn { position: fixed; width: 45px; height: 45px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 50; cursor: pointer; font-size: 18px; transition: transform 0.1s; }
+        .float-btn:active { transform: scale(0.9); }
+        #chat-float { bottom: 20px; right: 20px; }
+        #graveyard-float { bottom: 20px; right: 80px; background: var(--text-color); }
+
+        /* CHAT WINDOW */
+        #chat-window { position: fixed; bottom: 85px; right: 20px; width: 300px; height: 350px; background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; z-index: 49; border: 1px solid var(--border-color); overflow: hidden; }
+        #chat-msgs { flex: 1; overflow-y: auto; padding: 15px; font-size: 13px; }
+        .msg-wrap { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; }
+        .msg-wrap.me { justify-content: flex-end; }
+        .msg { padding: 8px 12px; border-radius: 14px; max-width: 75%; word-wrap: break-word; }
+        .msg-wrap.me .msg { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+        .msg-wrap.other .msg { background: var(--input-bg); color: var(--text-color); border-bottom-left-radius: 4px; }
+        .chat-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--card-bg); font-weight: bold; z-index: 51; }
+
+        /* MODAL BACKGROUND */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 999; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body data-theme="light">
+
+    <div style="position: absolute; top: 20px; right: 20px; cursor: pointer; z-index:10;" onclick="toggleTheme()">
+        <i class="fas fa-moon fa-lg" style="color:var(--text-color)"></i>
+    </div>
+
+    <div id="piece-toast">Nama Bidak</div>
+
+    <div class="container">
+
+        <div class="text-center" style="margin-bottom: 20px;">
+            <h2 style="margin:0; color:var(--primary);"><i class="fas fa-chess-knight"></i> Chess Tap</h2>
+            <small style="color:gray;">Mode Ringan & Cepat</small>
+        </div>
+
+        <div id="screen-auth" class="sa-card">
+            <h3 class="text-center">Autentikasi</h3>
+            <div id="auth-login">
+                <input type="email" id="l-email" placeholder="Alamat Email">
+                <input type="password" id="l-pass" placeholder="Kata Sandi">
+                <button class="btn-primary" onclick="doLoginEmail()">Masuk</button>
+                <div style="margin: 20px 0; border-top: 1px solid var(--border-color);"></div>
+                <button style="background:#db4437; color:white;" onclick="doLoginGoogle()"><i class="fab fa-google"></i> Lanjutkan dengan Google</button>
+                <button class="btn-outline" onclick="doLoginAnon()">Masuk sebagai Tamu</button>
+                <p class="text-center" style="font-size:13px; margin-top:15px; color:gray;">
+                    Belum memiliki akun? <b onclick="toggleAuthMode('reg')" style="color:var(--primary); cursor:pointer;">Daftar di sini</b>
+                </p>
+            </div>
+            <div id="auth-reg" class="hidden">
+                <input type="email" id="r-email" placeholder="Alamat Email">
+                <input type="password" id="r-pass" placeholder="Kata Sandi">
+                <button class="btn-primary" onclick="doRegEmail()">Daftar Akun</button>
+                <p class="text-center" style="font-size:13px; margin-top:15px; color:gray;">
+                    Sudah memiliki akun? <b onclick="toggleAuthMode('login')" style="color:var(--primary); cursor:pointer;">Kembali ke Masuk</b>
+                </p>
+            </div>
+        </div>
+
+        <div id="modal-profile" class="modal-overlay hidden">
+            <div class="sa-card" style="width:85%; max-width:320px; position:relative;">
+                <button id="close-profile-btn" class="hidden" style="position:absolute; top:15px; right:15px; background:transparent; border:none; color:var(--text-color); width:auto; padding:0; margin:0;" onclick="$('#modal-profile').addClass('hidden')">
+                    <i class="fas fa-times fa-lg"></i>
+                </button>
+                <h3 class="text-center">Profil Pengguna</h3>
+                <div class="text-center" style="margin-top: 15px;">
+                    <img id="pp-preview" src="" class="avatar-lg" onclick="openGallery()">
+                    <div style="font-size:13px; color:var(--primary); font-weight:600; cursor:pointer; margin-bottom:20px;" onclick="openGallery()">Ganti Foto Profil</div>
+                </div>
+                <input type="text" id="setup-name" placeholder="Masukkan Nama Anda">
+                <button class="btn-primary" onclick="saveProfile(false)">Simpan Profil</button>
+                <button id="btn-skip-profile" class="btn-outline" onclick="saveProfile(true)">Gunakan Nama Acak</button>
+            </div>
+        </div>
+
+        <div id="modal-gallery" class="modal-overlay hidden" style="z-index: 1000;">
+            <div class="sa-card" style="width:90%; max-width:380px; padding: 20px;">
+                <div class="flex-between" style="margin-bottom:15px;">
+                    <h3 style="margin:0;">Pilih Foto Profil</h3>
+                    <i class="fas fa-times fa-lg" onclick="$('#modal-gallery').addClass('hidden')" style="cursor:pointer; color:var(--danger);"></i>
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:15px;">
+                    <button id="btn-cat-anime" class="cat-btn" onclick="loadCat('anime')">Anime</button>
+                    <button id="btn-cat-manhwa" class="cat-btn" onclick="loadCat('manhwa')">Manhwa</button>
+                    <button id="btn-cat-meme" class="cat-btn" onclick="loadCat('meme')">Meme</button>
+                </div>
+                <div id="gal-grid" class="gallery-grid"></div>
+            </div>
+        </div>
+
+        <div id="screen-lobby" class="hidden">
+            <div class="sa-card flex-between" style="padding: 15px 20px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <img id="lobby-pp" src="" class="avatar" style="width:45px; height:45px;">
+                    <div>
+                        <small style="color:gray; font-size:12px;">Selamat datang,</small><br>
+                        <b id="lobby-name" style="font-size:16px;">User</b>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-outline btn-small" onclick="openSettings()" title="Pengaturan Profil"><i class="fas fa-cog"></i></button>
+                    <button class="btn-danger btn-small" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+            
+            <div class="sa-card">
+                <h3>Buat Ruangan</h3>
+                <input type="text" id="c-room-name" placeholder="Nama Ruangan">
+                <div class="flex-between" style="gap:10px;">
+                    <select id="c-room-type" onchange="checkRoomType()" style="width:50%">
+                        <option value="public">Publik</option>
+                        <option value="private">Privat</option>
+                    </select>
+                    <select id="c-room-dur" style="width:50%">
+                        <option value="1">1 Jam</option>
+                        <option value="3">3 Jam</option>
+                        <option value="5">5 Jam</option>
+                    </select>
+                </div>
+                <input type="password" id="c-room-pass" placeholder="Kata Sandi Ruangan" class="hidden">
+                <button class="btn-primary" onclick="createRoom()">Buat Ruangan Baru</button>
+            </div>
+            
+            <div class="sa-card">
+                <h3>Daftar Ruangan</h3>
+                <div id="room-list">Memuat data...</div>
+            </div>
+        </div>
+
+        <div id="screen-game" class="hidden">
+            <div class="sa-card" style="padding:15px; display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 60%;">
+                    <b id="g-room-name" style="font-size:15px;">Room</b><br>
+                    <small style="color:gray" id="g-room-id"></small>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-outline btn-small" onclick="copyRoomId()" title="Salin ID Ruangan"><i class="fas fa-copy"></i> ID</button>
+                    <button class="btn-danger btn-small" onclick="leaveRoom()">Keluar</button>
+                </div>
+            </div>
+
+            <div class="flex-between" style="padding:0 10px; margin-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <img id="opp-pp" src="" class="avatar">
+                    <span id="opp-name" style="font-weight:600;"><i class="fas fa-spinner fa-spin"></i> Menunggu Lawan...</span>
+                </div>
+                <span id="game-status" style="font-weight:bold; color:var(--primary); font-size:13px;"></span>
+            </div>
+
+            <div id="board"></div>
+
+            <div class="flex-between" style="padding:0 10px; margin-top:10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <img id="my-pp" src="" class="avatar">
+                    <span id="my-name" style="font-weight:600;">Saya</span>
+                </div>
+                <span id="my-color" style="font-size:12px; font-weight:bold; padding:4px 10px; border-radius:12px; background:var(--border-color);"></span>
+            </div>
+
+            <div id="game-ui-floats" class="hidden">
+                <div id="chat-float" class="float-btn" onclick="toggleChat()">
+                    <i class="fas fa-comment-alt"></i>
+                    <span id="chat-badge" class="chat-badge hidden">0</span>
+                </div>
+
+                <div id="graveyard-float" class="float-btn" onclick="showGraveyard()">
+                    <i class="fas fa-skull"></i>
+                </div>
+                
+                <div id="chat-window" class="hidden">
+                    <div style="padding:15px; border-bottom:1px solid var(--border-color); font-weight:bold; background:var(--input-bg);">
+                        Obrolan Permainan
+                    </div>
+                    <div id="chat-msgs"></div>
+                    <div style="padding:10px; border-top:1px solid var(--border-color); display:flex; gap:8px;">
+                        <input id="chat-in" placeholder="Tulis pesan..." style="margin:0; flex:1;">
+                        <button onclick="sendChat()" style="width:auto; margin:0; padding:0 20px;" class="btn-primary"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+        <script>
+            // config firebase
+            const firebaseConfig = {
+    apiKey: "masukin_api_key_lu_disini",
+    authDomain: "masukin_auth_domain_disini",
+    databaseURL: "masukin_database_url_disini",
+    projectId: "masukin_project_id_disini",
+    storageBucket: "masukin_storage_bucket_disini",
+    messagingSenderId: "masukin_messaging_sender_id_disini",
+    appId: "masukin_app_id_disini"
+};
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.database();
+
+            let game = new Chess();
+            let board = null;
+            let currentUser = null;
+            let roomId = null;
+            let playerColor = 'w';
+            let roomRef = null;
+            let selectedSq = null;
+            let unreadCount = 0;
+
+            const audioMove = new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_Common/Standard/move-self.mp3');
+            const audioCapture = new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_Common/Standard/capture.mp3');
+            const audioNotify = new Audio('https://images.chesscomfiles.com/chess-themes/sounds/_Common/Standard/move-check.mp3');
+
+            const pieceNames = { 'p':'Pion', 'n':'Kuda', 'b':'Gajah', 'r':'Benteng', 'q':'Ratu', 'k':'Raja' };
+
+            // data photo profile
+            const dbPhotos = {
+                anime: ['img1.jpg','img10.jpg','img2.jpg','img3.jpg','img4.jpg','img5.jpg','img6.jpg','img7.jpg','img8.jpg','img9.jpg'],
+                manhwa: ['img1.jpg','img2.jpg','img3.jpg','img4.jpg'],
+                meme: ['img1.jpg','img2.jpg','img3.jpg','img4.jpg','img5.jpg','img6.jpg','img7.jpg']
+            };
+            
+            const defaultPP = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#a0aab5"/><circle cx="50" cy="40" r="18" fill="#ffffff"/><path d="M15 95 Q50 55 85 95" stroke="#ffffff" stroke-width="12" fill="none"/></svg>');
+            let tempPhotoStr = '';
+
+            // auth dan setup
+            function toggleTheme() {
+                let b = document.body;
+                let icon = document.querySelector('.fa-moon, .fa-sun');
+                if (b.getAttribute('data-theme') === 'light') {
+                    b.setAttribute('data-theme', 'dark');
+                    icon.className = 'fas fa-sun fa-lg';
+                } else {
+                    b.setAttribute('data-theme', 'light');
+                    icon.className = 'fas fa-moon fa-lg';
+                }
+            }
+
+            auth.onAuthStateChanged(u => {
+                if (u) {
+                    currentUser = u;
+                    if (!u.displayName) {
+                        tempPhotoStr = u.photoURL || defaultPP;
+                        $('#pp-preview').attr('src', tempPhotoStr);
+                        $('#setup-name').val('');
+                        $('#btn-skip-profile').removeClass('hidden');
+                        $('#close-profile-btn').addClass('hidden');
+                        $('#modal-profile').removeClass('hidden');
+                        $('#screen-auth').addClass('hidden');
+                    } else {
+                        $('#modal-profile').addClass('hidden');
+                        $('#lobby-name').text(u.displayName);
+                        $('#lobby-pp').attr('src', u.photoURL || defaultPP);
+                        checkReconnect();
+                    }
+                } else {
+                    showScreen('screen-auth');
+                }
+            });
+
+            function toggleAuthMode(m) {
+                if (m === 'reg') { $('#auth-login').addClass('hidden'); $('#auth-reg').removeClass('hidden'); } 
+                else { $('#auth-login').removeClass('hidden'); $('#auth-reg').addClass('hidden'); }
+            }
+
+            const doLoginEmail = () => auth.signInWithEmailAndPassword($('#l-email').val(), $('#l-pass').val()).catch(e=>Swal.fire('Kesalahan', e.message, 'error'));
+            const doRegEmail = () => auth.createUserWithEmailAndPassword($('#r-email').val(), $('#r-pass').val()).catch(e=>Swal.fire('Kesalahan', e.message, 'error'));
+            const doLoginGoogle = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>Swal.fire('Kesalahan', e.message, 'error'));
+            const doLoginAnon = () => auth.signInAnonymously().catch(e=>Swal.fire('Kesalahan', e.message, 'error'));
+            const doLogout = () => { auth.signOut(); localStorage.removeItem('active_room'); location.reload(); };
+
+            // fitur profil dan galeri
+            function openSettings() {
+                $('#setup-name').val(currentUser.displayName || '');
+                tempPhotoStr = currentUser.photoURL || defaultPP;
+                $('#pp-preview').attr('src', tempPhotoStr);
+                $('#btn-skip-profile').addClass('hidden');
+                $('#close-profile-btn').removeClass('hidden');
+                $('#modal-profile').removeClass('hidden');
+            }
+
+            function openGallery() {
+                $('#modal-gallery').removeClass('hidden');
+                loadCat('anime');
+            }
+
+            function loadCat(cat) {
+                $('.cat-btn').removeClass('active');
+                $('#btn-cat-'+cat).addClass('active');
+                let h = '';
+                dbPhotos[cat].forEach(img => {
+                    const path = `Photo/${cat}/${img}`;
+                    h += `<img src="${path}" class="gallery-img" onclick="selectPP('${path}')">`;
+                });
+                $('#gal-grid').html(h);
+            }
+
+            function selectPP(path) {
+                tempPhotoStr = path;
+                $('#pp-preview').attr('src', path);
+                $('#modal-gallery').addClass('hidden');
+            }
+
+            function saveProfile(skip) {
+                let name = $('#setup-name').val();
+                if (skip) {
+                    const c = 'bcdfghjklmnpqrstvwxyz', v = 'aeiou', o = '13579', e = '02468';
+                    const r = (s) => s[Math.floor(Math.random()*s.length)];
+                    name = 'Player_' + r(c).toUpperCase()+r(v)+r(c)+r(v)+r(o)+r(e);
+                }
+                
+                if (!name) return Swal.fire('Perhatian', 'Harap isi nama Anda terlebih dahulu.', 'warning');
+                if (!tempPhotoStr) tempPhotoStr = defaultPP;
+
+                Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+
+                currentUser.updateProfile({
+                    displayName: name,
+                    photoURL: tempPhotoStr
+                }).then(() => {
+                    Swal.close();
+                    $('#modal-profile').addClass('hidden');
+                    $('#lobby-name').text(name);
+                    $('#lobby-pp').attr('src', tempPhotoStr);
+                    Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'Profil berhasil diperbarui', showConfirmButton: false, timer: 1500 });
+                    
+                    if ($('#screen-lobby').hasClass('hidden') && $('#screen-game').hasClass('hidden')) {
+                        checkReconnect();
+                    }
+                }).catch(e => {
+                    Swal.fire('Kesalahan', 'Gagal memperbarui profil: ' + e.message, 'error');
+                });
+            }
+
+            // lobby sistem
+            function checkReconnect() {
+                const saved = localStorage.getItem('active_room');
+                if (saved) {
+                    db.ref('rooms/'+saved).once('value').then(s => {
+                        if (s.exists()) joinRoomExec(saved, null, true);
+                        else { localStorage.removeItem('active_room'); initLobby(); }
+                    });
+                } else initLobby();
+            }
+
+            function initLobby() {
+                showScreen('screen-lobby');
+                db.ref('rooms').on('value', snap => {
+                    const l = $('#room-list'); l.empty();
+                    if (!snap.exists()) { l.html('<div class="text-center" style="padding:20px; color:gray;">Belum ada ruangan yang tersedia.</div>'); return; }
+                    snap.forEach(c => {
+                        const d = c.val();
+                        if (d.expireAt && Date.now() > d.expireAt) return;
+                        if (d.white && d.black) return;
+                        const lock = d.password ? '<i class="fas fa-lock" style="color:var(--danger); font-size:12px;"></i>' : '';
+                        
+                        const hostPhoto = d.white?.photo || defaultPP;
+                        
+                        l.append(`
+                            <div style="padding:15px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <img src="${hostPhoto}" class="avatar">
+                                <div>
+                                    <b style="font-size:15px;">${d.name}</b> ${lock}<br>
+                                    <small style="color:gray;">Host: ${d.white?.name}</small>
+                                </div>
+                            </div>
+                            <button class="btn-primary btn-small" onclick="tryJoin('${c.key}',${!!d.password})">Gabung</button>
+                            </div>
+                        `);
+                    });
+                });
+            }
+
+            function checkRoomType() {
+                if ($('#c-room-type').val() === 'private') $('#c-room-pass').removeClass('hidden');
+                else $('#c-room-pass').addClass('hidden');
+            }
+
+            function createRoom() {
+                const name = $('#c-room-name').val() || "Ruangan Publik";
+                const pass = $('#c-room-type').val() === 'private' ? $('#c-room-pass').val(): null;
+                const dur = parseInt($('#c-room-dur').val()) * 3600000;
+                
+                if($('#c-room-type').val() === 'private' && !pass) {
+                    return Swal.fire('Perhatian', 'Harap isi kata sandi untuk ruangan privat.', 'warning');
+                }
+
+                const ref = db.ref('rooms').push();
+                ref.set({
+                    name, password: pass, expireAt: Date.now() + dur,
+                    white: { uid: currentUser.uid, name: currentUser.displayName, photo: currentUser.photoURL || defaultPP },
+                    fen: 'start', turn: 'w'
+                }).then(() => {
+                    ref.onDisconnect().remove();
+                    joinRoomExec(ref.key, null, true);
+                });
+            }
+
+            function tryJoin(id, isPriv) {
+                if (isPriv) {
+                    Swal.fire({ title: 'Masukkan Kata Sandi', input: 'text', showCancelButton: true, confirmButtonText: 'Konfirmasi', cancelButtonText: 'Batal' }).then(r=> {
+                        if (r.isConfirmed) joinRoomExec(id, r.value, false);
+                    });
+                } else joinRoomExec(id, null, false);
+            }
+
+            function joinRoomExec(id, pass, isHost) {
+                const ref = db.ref('rooms/'+id);
+                ref.once('value').then(s => {
+                    if (!s.exists()) return Swal.fire('Informasi', 'Ruangan sudah tidak tersedia.', 'error');
+                    const d = s.val();
+                    if (!isHost && d.password && d.password !== pass) return Swal.fire('Akses Ditolak', 'Kata sandi tidak sesuai.', 'error');
+
+                    if (d.white && d.white.uid === currentUser.uid) playerColor = 'w';
+                    else if (!d.black) {
+                        playerColor = 'b';
+                        ref.update({
+                            black: { uid: currentUser.uid, name: currentUser.displayName, photo: currentUser.photoURL || defaultPP }
+                        });
+                    } else if (d.black.uid === currentUser.uid) playerColor = 'b';
+                    else return Swal.fire('Penuh', 'Ruangan sudah terisi penuh.', 'warning');
+
+                    roomId = id; roomRef = ref;
+                    localStorage.setItem('active_room', id);
+                    enterGame();
+                });
+            }
+
+            function enterGame() {
+                showScreen('screen-game');
+                $('#game-ui-floats').removeClass('hidden');
+
+                roomRef.once('value').then(s => {
+                    const d = s.val();
+                    $('#g-room-name').text(d.name);
+                    $('#g-room-id').text('#ID: '+roomId.substring(roomId.length-5));
+                    
+                    $('#my-name').text(currentUser.displayName);
+                    $('#my-pp').attr('src', currentUser.photoURL || defaultPP);
+                    $('#my-color').text(playerColor === 'w'?'Bidak Putih': 'Bidak Hitam');
+                });
+
+                initBoard();
+                listenGameChange();
+                listenChat();
+            }
+
+            function initBoard() {
+                if (board) board.destroy();
+                game = new Chess();
+                selectedSq = null;
+                board = Chessboard('board', {
+                    draggable: false, position: 'start',
+                    pieceTheme: (p) => 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/'+p.toLowerCase()+'.png'
+                });
+                if (playerColor === 'b') board.orientation('black');
+                $(window).resize(board.resize);
+                $('#board').off('click').on('click', '.square-55d63', handleSquareClick);
+            }
+
+            function playSound(type) {
+                try {
+                    if (type === 'move') audioMove.play().catch(e=>{});
+                    else if (type === 'capture') audioCapture.play().catch(e=>{});
+                    else if (type === 'notify') audioNotify.play().catch(e=>{});
+                } catch(e) {}
+            }
+
+            function copyRoomId() {
+                navigator.clipboard.writeText(roomId).then(() => {
+                    Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'ID Ruangan tersalin!', showConfirmButton: false, timer: 1500 });
+                });
+            }
+
+            function handleSquareClick() {
+                if (game.game_over() || game.turn() !== playerColor) return;
+                const clickedSq = $(this).attr('data-square');
+                const pieceOnSq = game.get(clickedSq);
+
+                if (pieceOnSq) showPieceName(pieceOnSq.type, pieceOnSq.color);
+
+                if (!selectedSq) {
+                    if (pieceOnSq && pieceOnSq.color === playerColor) selectPiece(clickedSq);
+                    return;
+                }
+
+                const moveAttempt = game.move({ from: selectedSq, to: clickedSq, promotion: 'q' });
+
+                if (moveAttempt) {
+                    board.position(game.fen());
+                    if (moveAttempt.captured) playSound('capture'); else playSound('move');
+                    sendMoveToFirebase();
+                    clearHighlights();
+                    selectedSq = null;
+                } else {
+                    if (pieceOnSq && pieceOnSq.color === playerColor) selectPiece(clickedSq);
+                    else { clearHighlights(); selectedSq = null; }
+                }
+            }
+
+            let toastTimeout;
+            function showPieceName(type, color) {
+                const label = document.getElementById('piece-toast');
+                label.innerText = pieceNames[type];
+                label.style.opacity = '1';
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => { label.style.opacity = '0'; }, 2000);
+            }
+
+            function showGraveyard() {
+                const boardCounts = { p: 0, n: 0, b: 0, r: 0, q: 0 };
+                const oppColor = playerColor === 'w' ? 'b': 'w';
+                const currentBoard = game.board();
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        const p = currentBoard[r][c];
+                        if (p && p.color === oppColor) boardCounts[p.type]++;
+                    }
+                }
+
+                const start = { p: 8, n: 2, b: 2, r: 2, q: 1 };
+                let html = '<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-top:15px;">';
+                let found = false;
+
+                for (let type in start) {
+                    const lost = start[type] - boardCounts[type];
+                    if (lost > 0) {
+                        found = true;
+                        const imgUrl = 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/' + oppColor + type + '.png';
+                        html += `<div style="text-align:center; background:var(--input-bg); padding:10px; border-radius:10px;"><img src="${imgUrl}" style="width:45px;"><div style="font-weight:bold; margin-top:5px; font-size:14px;">x${lost}</div></div>`;
+                    }
+                }
+                html += '</div>';
+
+                if (!found) html = '<p style="color:gray;">Belum ada bidak lawan yang berhasil dieliminasi.</p>';
+                Swal.fire({ title: 'Daftar Bidak Tereliminasi', html: html, showCloseButton: true, confirmButtonText: 'Tutup' });
+            }
+
+            function toggleChat() {
+                const chatWin = $('#chat-window');
+                chatWin.toggleClass('hidden');
+                if(!chatWin.hasClass('hidden')) {
+                    unreadCount = 0;
+                    $('#chat-badge').addClass('hidden').text(0);
+                }
+            }
+
+            function selectPiece(sq) {
+                clearHighlights();
+                selectedSq = sq;
+                $('.square-'+sq).addClass('highlight-src');
+                const moves = game.moves({ square: sq, verbose: true });
+                moves.forEach(m => $('.square-'+m.to).addClass('highlight-dest'));
+            }
+
+            function clearHighlights() { $('.square-55d63').removeClass('highlight-src highlight-dest'); }
+
+            function sendMoveToFirebase() {
+                roomRef.update({ fen: game.fen(), turn: game.turn() });
+            }
+
+            function listenGameChange() {
+                roomRef.on('value', s => {
+                    if (!s.exists()) { Swal.fire('Informasi', 'Permainan telah diakhiri oleh host.', 'info').then(doLogout); return; }
+                    const d = s.val();
+                    const enemy = playerColor === 'w' ? d.black: d.white;
+                    
+                    if(enemy) {
+                        $('#opp-name').text(enemy.name);
+                        $('#opp-pp').attr('src', enemy.photo || defaultPP).removeClass('hidden');
+                    } else {
+                        $('#opp-name').html('<i class="fas fa-spinner fa-spin"></i> Menunggu Lawan...');
+                        $('#opp-pp').addClass('hidden');
+                    }
+
+                    if (d.fen && d.fen !== game.fen()) {
+                        playSound('notify');
+                        if (navigator.vibrate) navigator.vibrate(200);
+                        game.load(d.fen);
+                        board.position(d.fen);
+                        clearHighlights();
+                        selectedSq = null;
+                    }
+
+                    let st = '';
+                    if (game.in_checkmate()) {
+                        const winner = game.turn() === 'w' ? 'HITAM': 'PUTIH';
+                        st = 'PERMAINAN SELESAI - ' + winner + ' MENANG!';
+                        Swal.fire({ title: 'SKAKMAT!', text: winner + ' memenangkan pertandingan!', icon: 'success', confirmButtonText: 'Tutup' });
+                    } else if (game.in_draw()) {
+                        st = 'REMIS (SERI)';
+                        Swal.fire('REMIS', 'Pertandingan berakhir seri.', 'info');
+                    } else {
+                        st = (game.turn() === 'w' ? 'Giliran Bidak Putih': 'Giliran Bidak Hitam');
+                        if (game.in_check()) st += ' (SKAK!)';
+                    }
+
+                    $('#game-status').text(st);
+                    if (game.in_check()) $('#game-status').css('color', 'var(--danger)');
+                    else $('#game-status').css('color', 'var(--primary)');
+                });
+            }
+
+            function sendChat() {
+                const t = $('#chat-in').val();
+                if (t) {
+                    roomRef.child('chat').push({
+                        uid: currentUser.uid, name: currentUser.displayName, photo: currentUser.photoURL || defaultPP, msg: t
+                    });
+                    $('#chat-in').val('');
+                }
+            }
+
+            function listenChat() {
+                $('#chat-msgs').empty();
+                roomRef.child('chat').on('child_added', s => {
+                    const v = s.val();
+                    const isMe = v.uid === currentUser.uid;
+                    const cls = isMe ? 'me' : 'other';
+                    
+                    if($('#chat-window').hasClass('hidden') && !isMe) {
+                        unreadCount++;
+                        $('#chat-badge').text(unreadCount).removeClass('hidden');
+                    }
+
+                    const ppHtml = `<img src="${v.photo || defaultPP}" class="avatar" style="width:28px;height:28px;">`;
+                    
+                    $('#chat-msgs').append(`
+                        <div class="msg-wrap ${cls}">
+                            ${!isMe ? ppHtml : ''}
+                            <div class="msg">
+                                ${!isMe ? `<b style="font-size:11px; opacity:0.7; display:block; margin-bottom:2px;">${v.name}</b>` : ''}
+                                ${v.msg}
+                            </div>
+                            ${isMe ? ppHtml : ''}
+                        </div>
+                    `);
+                    
+                    const div = document.getElementById('chat-msgs');
+                    div.scrollTop = div.scrollHeight;
+                });
+            }
+
+            function showScreen(id) {
+                $('.container > div').not('.sa-card, .text-center').addClass('hidden');
+                $('#screen-auth').addClass('hidden');
+                $('#screen-lobby').addClass('hidden');
+                $('#screen-game').addClass('hidden');
+                $('#modal-profile').addClass('hidden');
+                
+                $('#'+id).removeClass('hidden');
+            }
+
+            function leaveRoom() {
+                Swal.fire({
+                    title: 'Konfirmasi',
+                    text: 'Apakah Anda yakin ingin keluar dari ruangan ini?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Keluar',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        localStorage.removeItem('active_room');
+                        roomRef.off();
+                        location.reload();
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
